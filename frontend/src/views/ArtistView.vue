@@ -1,11 +1,14 @@
 <script setup>
-import { computed, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useArtworksStore } from '../stores/artworks.js'
+import { useInfiniteScroll } from '../composables/useInfiniteScroll.js'
 import ArtworkGrid from '../components/gallery/ArtworkGrid.vue'
 import BaseButton from '../components/base/BaseButton.vue'
 
-const SKELETON_COUNT = 6
+// Grey boxes shown while the first page loads, and while each next page loads
+const FIRST_LOAD_SKELETONS = 6
+const NEXT_LOAD_SKELETONS = 3
 
 const route = useRoute()
 const artworksStore = useArtworksStore()
@@ -20,6 +23,26 @@ watch(slug, (value) => artworksStore.loadFirstPage(value), { immediate: true })
 const hasArtworks = computed(() => entry.value.items.length > 0)
 const isFirstLoad = computed(() => entry.value.isLoading && !hasArtworks.value)
 const isEmpty = computed(() => entry.value.page > 0 && !hasArtworks.value && !entry.value.error)
+
+const skeletonCount = computed(() => {
+  if (isFirstLoad.value) return FIRST_LOAD_SKELETONS
+  return entry.value.isLoading ? NEXT_LOAD_SKELETONS : 0
+})
+
+/* ---------- Scroll to load more ---------- */
+const sentinel = ref(null)
+
+const { restart } = useInfiniteScroll(sentinel, () => artworksStore.loadMore(slug.value))
+
+// After a page finishes loading, check again. If the marker is still near the
+// screen (a tall monitor, say), the next page loads without any scrolling.
+watch(
+  () => entry.value.isLoading,
+  (loading) => {
+    if (!loading) restart()
+  },
+  { flush: 'post' },
+)
 
 const retry = () => {
   if (entry.value.page === 0) {
@@ -44,23 +67,22 @@ const retry = () => {
             v-if="hasArtworks || isFirstLoad"
             :artworks="entry.items"
             :artist-name="entry.artistName"
-            :skeleton-count="isFirstLoad ? SKELETON_COUNT : 0"
+            :skeleton-count="skeletonCount"
           />
 
+          <!-- If loading failed, show a message and stop auto-loading -->
           <div v-if="entry.error" class="gallery__footer" role="alert">
             <p class="gallery__message">{{ entry.error }}</p>
             <BaseButton variant="outline" @click="retry">Try again</BaseButton>
           </div>
 
-          <div v-else-if="entry.hasMore" class="gallery__footer">
-            <BaseButton
-              variant="outline"
-              :loading="entry.isLoading"
-              @click="artworksStore.loadMore(slug)"
-            >
-              {{ entry.isLoading ? 'Loading...' : 'Load more' }}
-            </BaseButton>
-          </div>
+          <!-- The invisible marker. Only exists while there is more to load. -->
+          <div
+            v-else-if="entry.hasMore"
+            ref="sentinel"
+            class="gallery__sentinel"
+            aria-hidden="true"
+          ></div>
         </template>
       </section>
     </Transition>
@@ -90,6 +112,10 @@ const retry = () => {
 
 .gallery__footer .gallery__message {
   padding: 0;
+}
+
+.gallery__sentinel {
+  height: 1px;
 }
 
 /* Fade between artists */

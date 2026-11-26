@@ -2,7 +2,7 @@ import { reactive } from 'vue'
 import { defineStore } from 'pinia'
 import { fetchArtworksByArtist } from '../services/artworkService.js'
 
-const PAGE_SIZE = 12
+const PAGE_SIZE = 2
 
 // What we remember about one artist
 const createEntry = () => ({
