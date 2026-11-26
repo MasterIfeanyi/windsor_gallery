@@ -3,8 +3,8 @@ import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faChevronLeft, faChevronRight, faBars, faXmark } from '@fortawesome/free-solid-svg-icons'
-import { tempArtists } from '../../data/tempArtists.js'
-import { slugify } from '../../utils/slugify.js'
+import { storeToRefs } from 'pinia'
+import { useArtistsStore } from '../../stores/artists.js'
 
 // How many artist names show at once on wide screens
 const VISIBLE_COUNT = 4
@@ -14,21 +14,22 @@ const DESKTOP_MIN_WIDTH = 768
 
 const route = useRoute()
 
-// Each artist gets a name (to display) and a slug (for the web address)
-const artists = tempArtists.map((name) => ({ name, slug: slugify(name) }))
+// The artists now come from the server through our store
+const artistsStore = useArtistsStore()
+const { artists } = storeToRefs(artistsStore)
 
 /* ---------- Wide screen: sliding row ---------- */
 const startIndex = ref(0)
 
 const canGoBack = computed(() => startIndex.value > 0)
-const canGoForward = computed(() => startIndex.value + VISIBLE_COUNT < artists.length)
+const canGoForward = computed(() => startIndex.value + VISIBLE_COUNT < artists.value.length)
 
 const goBack = () => {
   startIndex.value = Math.max(0, startIndex.value - VISIBLE_COUNT)
 }
 
 const goForward = () => {
-  const lastStart = artists.length - VISIBLE_COUNT
+  const lastStart = Math.max(0, artists.value.length - VISIBLE_COUNT)
   startIndex.value = Math.min(lastStart, startIndex.value + VISIBLE_COUNT)
 }
 
@@ -64,6 +65,7 @@ const handleResize = () => {
 }
 
 onMounted(() => {
+  artistsStore.loadArtists()
   document.addEventListener('keydown', handleKeydown)
   window.addEventListener('resize', handleResize)
 })
@@ -78,7 +80,9 @@ onBeforeUnmount(() => {
 <template>
   <header class="header">
     <div class="header__inner">
-      <img src="../../assets/logo.png" alt="Site logo" class="header__logo" />
+      <RouterLink :to="{ name: 'home' }" class="header__logo-link" aria-label="Go to homepage">
+        <img src="../../assets/logo.png" alt="Site logo" class="header__logo" />
+      </RouterLink>
 
       <!-- Wide screens: sliding row with arrows -->
       <nav class="nav" aria-label="Artists">
@@ -192,6 +196,13 @@ onBeforeUnmount(() => {
 .header__logo {
   height: 48px;
   width: auto;
+}
+
+.header__logo-link {
+  display: flex;
+  align-items: center;
+  justify-self: start;
+  width: fit-content;
 }
 
 /* ---------- Wide screen nav ---------- */
