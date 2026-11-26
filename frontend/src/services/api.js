@@ -5,6 +5,8 @@ import axios from 'axios'
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   timeout: 15000,
+  // Without this, the browser would not send our login cookie to the server
+  withCredentials: true,
 })
 
 export default api
