@@ -1,9 +1,10 @@
 import crypto from 'node:crypto'
+import mongoose from 'mongoose'
 import cloudinary from '../config/cloudinary.js'
 import Artist from '../models/Artist.js'
 import Artwork from '../models/Artwork.js'
 import { asyncHandler } from '../utils/asyncHandler.js'
-import { validateArtworkInput } from '../validators/artworkInput.js'
+import { validateArtworkEdit, validateArtworkInput } from '../validators/artworkInput.js'
 import { ALLOWED_FORMATS, INCOMING_TRANSFORMATION, UPLOAD_ROOT } from '../constants/upload.js'
 
 // The random part of an image name looks like 3f2b8c1e-9a4d-4e7b-8c21-5d6f7a8b9c0d
@@ -109,4 +110,68 @@ export const createArtwork = asyncHandler(async (req, res) => {
         }
         throw err
     }
+})
+
+// PATCH /api/admin/artworks/:id
+export const updateArtwork = asyncHandler(async (req, res) => {
+    const { id } = req.params
+
+    if (!mongoose.isValidObjectId(id)) {
+        return res.status(404).json({ message: 'Artwork not found' })
+    }
+
+    const { error, value } = validateArtworkEdit(req.body)
+    if (error) {
+        return res.status(400).json({ message: error })
+    }
+
+    // Build the update from only what was sent
+    const { releaseYear, ...fields } = value
+    const toSet = { ...fields }
+    if (typeof releaseYear === 'number') toSet.releaseYear = releaseYear
+
+    const operation = {}
+    if (Object.keys(toSet).length > 0) operation.$set = toSet
+    // null means the year box was cleared, so the year is removed completely
+    if (releaseYear === null) operation.$unset = { releaseYear: '' }
+
+    const artwork = await Artwork.findByIdAndUpdate(id, operation, {
+        new: true,
+        runValidators: true,
+    })
+        .select('title releaseYear image artist createdAt')
+        .lean()
+
+    if (!artwork) {
+        return res.status(404).json({ message: 'Artwork not found' })
+    }
+
+    res.json({ artwork })
+})
+
+// DELETE /api/admin/artworks/:id
+export const deleteArtwork = asyncHandler(async (req, res) => {
+    const { id } = req.params
+
+    if (!mongoose.isValidObjectId(id)) {
+        return res.status(404).json({ message: 'Artwork not found' })
+    }
+
+    // The record goes first. If the image delete fails afterwards, the worst
+    // case is a stray image on Cloudinary. The other way round, the gallery
+    // could be left showing a broken image.
+    const artwork = await Artwork.findByIdAndDelete(id).select('image.publicId').lean()
+
+    if (!artwork) {
+        return res.status(404).json({ message: 'Artwork not found' })
+    }
+
+    try {
+        // invalidate makes Cloudinary's CDN stop serving its saved copies
+        await cloudinary.uploader.destroy(artwork.image.publicId, { invalidate: true })
+    } catch (err) {
+        console.error('Could not delete the image from Cloudinary:', artwork.image.publicId, err)
+    }
+
+    res.json({ message: 'Artwork deleted' })
 })

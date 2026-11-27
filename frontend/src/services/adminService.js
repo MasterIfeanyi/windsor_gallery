@@ -36,3 +36,21 @@ export const saveArtwork = async (payload) => {
   const { data } = await api.post('/admin/artworks', payload)
   return data.artwork
 }
+
+// The admin's own list of one artist's artworks, one page at a time
+export const fetchAdminArtworksByArtist = async (slug, { page = 1, limit = 12 } = {}) => {
+  const { data } = await api.get(`/admin/artists/${encodeURIComponent(slug)}/artworks`, {
+    params: { page, limit },
+  })
+  return data
+}
+
+// Sends only the fields that changed, like { title: 'New name' }
+export const updateArtwork = async (id, changes) => {
+  const { data } = await api.patch(`/admin/artworks/${encodeURIComponent(id)}`, changes)
+  return data.artwork
+}
+
+export const deleteArtwork = async (id) => {
+  await api.delete(`/admin/artworks/${encodeURIComponent(id)}`)
+}

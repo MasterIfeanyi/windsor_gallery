@@ -1,56 +1,24 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useArtworksStore } from '../stores/artworks.js'
-import { useInfiniteScroll } from '../composables/useInfiniteScroll.js'
+import { useArtworkFeed } from '../composables/useArtworkFeed.js'
 import ArtworkGrid from '../components/gallery/ArtworkGrid.vue'
 import BaseButton from '../components/base/BaseButton.vue'
-
-// Grey boxes shown while the first page loads, and while each next page loads
-const FIRST_LOAD_SKELETONS = 6
-const NEXT_LOAD_SKELETONS = 3
 
 const route = useRoute()
 const artworksStore = useArtworksStore()
 
 const slug = computed(() => route.params.slug)
-const entry = computed(() => artworksStore.entryFor(slug.value))
 
 // Whenever the artist in the address changes (and when the page first opens),
 // make sure their first page is loaded. Already-loaded artists are skipped.
 watch(slug, (value) => artworksStore.loadFirstPage(value), { immediate: true })
 
-const hasArtworks = computed(() => entry.value.items.length > 0)
-const isFirstLoad = computed(() => entry.value.isLoading && !hasArtworks.value)
-const isEmpty = computed(() => entry.value.page > 0 && !hasArtworks.value && !entry.value.error)
-
-const skeletonCount = computed(() => {
-  if (isFirstLoad.value) return FIRST_LOAD_SKELETONS
-  return entry.value.isLoading ? NEXT_LOAD_SKELETONS : 0
-})
-
-/* ---------- Scroll to load more ---------- */
-const sentinel = ref(null)
-
-const { restart } = useInfiniteScroll(sentinel, () => artworksStore.loadMore(slug.value))
-
-// After a page finishes loading, check again. If the marker is still near the
-// screen (a tall monitor, say), the next page loads without any scrolling.
-watch(
-  () => entry.value.isLoading,
-  (loading) => {
-    if (!loading) restart()
-  },
-  { flush: 'post' },
+const { entry, hasArtworks, isFirstLoad, isEmpty, skeletonCount, sentinel, retry } = useArtworkFeed(
+  artworksStore,
+  slug,
 )
-
-const retry = () => {
-  if (entry.value.page === 0) {
-    artworksStore.loadFirstPage(slug.value)
-  } else {
-    artworksStore.loadMore(slug.value)
-  }
-}
 </script>
 
 <template>
@@ -67,8 +35,8 @@ const retry = () => {
             v-if="hasArtworks || isFirstLoad"
             :artworks="entry.items"
             :artist-name="entry.artistName"
-            :skeleton-count="skeletonCount"
             :artist-slug="slug"
+            :skeleton-count="skeletonCount"
           />
 
           <!-- If loading failed, show a message and stop auto-loading -->

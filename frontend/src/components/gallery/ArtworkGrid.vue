@@ -7,21 +7,24 @@ const EAGER_COUNT = 3
 defineProps({
   artworks: { type: Array, required: true },
   artistName: { type: String, default: '' },
+  artistSlug: { type: String, required: true },
   // Grey placeholder boxes shown while loading
   skeletonCount: { type: Number, default: 0 },
-  artistSlug: { type: String, required: true },
 })
 </script>
 
 <template>
   <ul class="grid">
     <li v-for="(artwork, index) in artworks" :key="artwork._id">
-      <ArtworkCard
-        :artwork="artwork"
-        :artist-name="artistName"
-        :artist-slug="artistSlug"
-        :eager="index < EAGER_COUNT"
-      />
+      <!-- A page can put its own card in this slot. If it does not, we use the public one. -->
+      <slot name="item" :artwork="artwork" :index="index" :eager="index < EAGER_COUNT">
+        <ArtworkCard
+          :artwork="artwork"
+          :artist-name="artistName"
+          :artist-slug="artistSlug"
+          :eager="index < EAGER_COUNT"
+        />
+      </slot>
     </li>
 
     <li

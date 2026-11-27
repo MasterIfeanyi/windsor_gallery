@@ -4,7 +4,7 @@ defineProps({
   variant: {
     type: String,
     default: 'primary',
-    validator: (value) => ['primary', 'outline'].includes(value),
+    validator: (value) => ['primary', 'outline', 'danger'].includes(value),
   },
   loading: { type: Boolean, default: false },
   disabled: { type: Boolean, default: false },
@@ -65,5 +65,15 @@ defineProps({
 
 .btn--loading {
   cursor: progress;
+}
+
+.btn--danger {
+  background-color: var(--color-error);
+  border-color: var(--color-error);
+  color: var(--color-bg);
+}
+
+.btn--danger:hover:not(:disabled) {
+  opacity: 0.85;
 }
 </style>
