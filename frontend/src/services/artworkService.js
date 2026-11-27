@@ -7,3 +7,9 @@ export const fetchArtworksByArtist = async (slug, { page = 1, limit = 12 } = {})
   })
   return data
 }
+
+// Asks the server for one artwork
+export const fetchArtworkById = async (id) => {
+  const { data } = await api.get(`/artworks/${encodeURIComponent(id)}`)
+  return data.artwork
+}

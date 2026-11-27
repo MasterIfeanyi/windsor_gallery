@@ -5,6 +5,7 @@
   --color-text-muted: #c4c4c4;
   --color-text-soft: #6b6b6b;
   --color-border: #e5e5e5;
+  --color-error: #c0392b;
 
   /* Font */
   --font-main: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;

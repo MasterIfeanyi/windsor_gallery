@@ -9,13 +9,19 @@ defineProps({
   artistName: { type: String, default: '' },
   // Grey placeholder boxes shown while loading
   skeletonCount: { type: Number, default: 0 },
+  artistSlug: { type: String, required: true },
 })
 </script>
 
 <template>
   <ul class="grid">
     <li v-for="(artwork, index) in artworks" :key="artwork._id">
-      <ArtworkCard :artwork="artwork" :artist-name="artistName" :eager="index < EAGER_COUNT" />
+      <ArtworkCard
+        :artwork="artwork"
+        :artist-name="artistName"
+        :artist-slug="artistSlug"
+        :eager="index < EAGER_COUNT"
+      />
     </li>
 
     <li

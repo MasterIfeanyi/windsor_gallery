@@ -5,6 +5,7 @@ import mongoose from 'mongoose'
 import { connectDB } from './config/db.js'
 import artistRoutes from './routes/artistRoutes.js'
 import authRoutes from './routes/authRoutes.js'
+import artworkRoutes from './routes/artworkRoutes.js'
 
 const app = express()
 
@@ -29,7 +30,7 @@ app.use(async (req, res, next) => {
 
 // Public data is the same for everyone, so we let the CDN and browsers keep a
 // copy for a short while.
-app.use('/api/artists', (req, res, next) => {
+app.use(['/api/artists', '/api/artworks'], (req, res, next) => {
     res.set('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600')
     next()
 })
@@ -49,6 +50,7 @@ app.get('/api/health', (req, res) => {
 })
 
 app.use('/api/artists', artistRoutes)
+app.use('/api/artworks', artworkRoutes)
 app.use('/api/auth', authRoutes)
 
 // Any /api address we don't have gets a clean 404

@@ -2,6 +2,7 @@ import Artist from '../models/Artist.js'
 import Artwork from '../models/Artwork.js'
 import { asyncHandler } from '../utils/asyncHandler.js'
 import { getPagination } from '../utils/pagination.js'
+import mongoose from 'mongoose'
 
 // GET /api/artists/:slug/artworks?page=1&limit=12
 export const getArtworksByArtist = asyncHandler(async (req, res) => {
@@ -31,4 +32,25 @@ export const getArtworksByArtist = asyncHandler(async (req, res) => {
         artworks,
         pagination: { page, limit, total, totalPages, hasMore: page < totalPages },
     })
+})
+
+// GET /api/artworks/:id
+export const getArtworkById = asyncHandler(async (req, res) => {
+    const { id } = req.params
+
+    // A made-up id like "abc" would crash the lookup, so we check its shape first
+    if (!mongoose.isValidObjectId(id)) {
+        return res.status(404).json({ message: 'Artwork not found' })
+    }
+
+    const artwork = await Artwork.findById(id)
+        .select('title releaseYear image artist')
+        .populate('artist', 'name slug')
+        .lean()
+
+    if (!artwork) {
+        return res.status(404).json({ message: 'Artwork not found' })
+    }
+
+    res.json({ artwork })
 })

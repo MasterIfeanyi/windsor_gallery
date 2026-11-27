@@ -68,6 +68,7 @@ const retry = () => {
             :artworks="entry.items"
             :artist-name="entry.artistName"
             :skeleton-count="skeletonCount"
+            :artist-slug="slug"
           />
 
           <!-- If loading failed, show a message and stop auto-loading -->

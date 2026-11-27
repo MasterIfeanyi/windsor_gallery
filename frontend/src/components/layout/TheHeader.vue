@@ -14,6 +14,9 @@ const DESKTOP_MIN_WIDTH = 768
 
 const route = useRoute()
 
+// True when the page we are on belongs to this artist (gallery or detail page)
+const isActiveArtist = (slug) => route.params.slug === slug
+
 // The artists now come from the server through our store
 const artistsStore = useArtistsStore()
 const { artists } = storeToRefs(artistsStore)
@@ -102,7 +105,7 @@ onBeforeUnmount(() => {
               <RouterLink
                 :to="{ name: 'artist', params: { slug: artist.slug } }"
                 class="nav__item"
-                active-class="nav__item--active"
+                :class="{ 'nav__item--active': isActiveArtist(artist.slug) }"
                 :tabindex="isInView(index) ? 0 : -1"
               >
                 {{ artist.name }}
@@ -168,6 +171,7 @@ onBeforeUnmount(() => {
                   :to="{ name: 'artist', params: { slug: artist.slug } }"
                   class="drawer__link"
                   active-class="drawer__link--active"
+                  :class="{ 'drawer__link--active': isActiveArtist(artist.slug) }"
                 >
                   {{ artist.name }}
                 </RouterLink>

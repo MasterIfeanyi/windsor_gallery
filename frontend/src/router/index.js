@@ -27,6 +27,11 @@ const router = createRouter({
       component: () => import('../views/AdminView.vue'),
       meta: { hideHeader: true, requiresAuth: true },
     },
+    {
+      path: '/artist/:slug/:id',
+      name: 'artwork',
+      component: () => import('../views/ArtworkDetailView.vue'),
+    },
   ],
 })
 

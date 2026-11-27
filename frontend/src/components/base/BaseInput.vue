@@ -4,9 +4,12 @@ import { useId } from 'vue'
 defineProps({
   label: { type: String, required: true },
   type: { type: String, default: 'text' },
+  inputmode: { type: String, default: undefined },
   autocomplete: { type: String, default: 'off' },
   placeholder: { type: String, default: '' },
+  maxlength: { type: Number, default: undefined },
   required: { type: Boolean, default: false },
+  disabled: { type: Boolean, default: false },
   error: { type: String, default: '' },
 })
 
@@ -27,9 +30,12 @@ const id = useId()
       class="field__input"
       :class="{ 'field__input--error': error }"
       :type="type"
+      :inputmode="inputmode"
       :autocomplete="autocomplete"
       :placeholder="placeholder"
+      :maxlength="maxlength"
       :required="required"
+      :disabled="disabled"
       :aria-invalid="Boolean(error)"
       :aria-describedby="error ? `${id}-error` : undefined"
     />
@@ -37,43 +43,3 @@ const id = useId()
     <p v-if="error" :id="`${id}-error`" class="field__error" role="alert">{{ error }}</p>
   </div>
 </template>
-
-<style scoped>
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.field__label {
-  font-size: var(--text-md);
-  font-weight: 500;
-}
-
-.field__input {
-  width: 100%;
-  height: 3rem;
-  padding: 0 var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-  background-color: var(--color-bg);
-  font: inherit;
-  font-size: var(--text-md);
-  color: var(--color-text);
-  transition: border-color var(--transition);
-}
-
-.field__input:focus {
-  outline: none;
-  border-color: var(--color-text);
-}
-
-.field__input--error {
-  border-color: #c0392b;
-}
-
-.field__error {
-  font-size: var(--text-sm);
-  color: #c0392b;
-}
-</style>
