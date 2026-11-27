@@ -1,26 +1,25 @@
 import axios from 'axios'
 import api from './api.js'
 
-// Step 1: ask our server for a signed ticket
-export const requestUploadSignature = async (artistId) => {
-  const { data } = await api.post('/admin/uploads/signature', { artistId })
+// Step 1: ask our server for a signed ticket. The server checks the whole
+// form first, so a mistake is caught before any image is uploaded.
+export const requestUploadSignature = async ({ artistId, title, releaseYear }) => {
+  const { data } = await api.post('/admin/uploads/signature', { artistId, title, releaseYear })
   return data
 }
 
 // Step 2: send the file straight to Cloudinary with that ticket.
 // We use plain axios here, not our api client, because our client sends the
 // login cookie, and Cloudinary must never receive it.
-export const uploadImageToCloudinary = async (file, signed, onProgress) => {
+export const uploadImageToCloudinary = async (file, { cloudName, uploadParams }, onProgress) => {
   const formData = new FormData()
+
+  // Send every field the server gave us, exactly as given
+  Object.entries(uploadParams).forEach(([key, value]) => formData.append(key, value))
   formData.append('file', file)
-  formData.append('api_key', signed.apiKey)
-  formData.append('timestamp', signed.timestamp)
-  formData.append('signature', signed.signature)
-  formData.append('folder', signed.folder)
-  formData.append('transformation', signed.transformation)
 
   const { data } = await axios.post(
-    `https://api.cloudinary.com/v1_1/${signed.cloudName}/image/upload`,
+    `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
     formData,
     {
       timeout: 120000,

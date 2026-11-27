@@ -37,7 +37,7 @@ export const useArtworkUpload = () => {
 
     try {
       stage.value = 'preparing'
-      const signed = await requestUploadSignature(artistId)
+      const signed = await requestUploadSignature({ artistId, title, releaseYear })
 
       stage.value = 'uploading'
       const uploaded = await uploadImageToCloudinary(file, signed, (percent) => {

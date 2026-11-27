@@ -32,4 +32,7 @@ const artworkSchema = new mongoose.Schema(
 // Makes "artworks of one artist, newest first" fast, even with huge numbers of images
 artworkSchema.index({ artist: 1, createdAt: -1 })
 
+// No two artworks can point at the same Cloudinary image
+artworkSchema.index({ 'image.publicId': 1 }, { unique: true })
+
 export default mongoose.models.Artwork || mongoose.model('Artwork', artworkSchema)

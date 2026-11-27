@@ -4,8 +4,9 @@ import cookieParser from 'cookie-parser'
 import mongoose from 'mongoose'
 import { connectDB } from './config/db.js'
 import artistRoutes from './routes/artistRoutes.js'
-import authRoutes from './routes/authRoutes.js'
 import artworkRoutes from './routes/artworkRoutes.js'
+import authRoutes from './routes/authRoutes.js'
+import adminRoutes from './routes/adminRoutes.js'
 
 const app = express()
 
@@ -35,8 +36,8 @@ app.use(['/api/artists', '/api/artworks'], (req, res, next) => {
     next()
 })
 
-// Login answers are personal, so nothing may ever keep a copy of them
-app.use('/api/auth', (req, res, next) => {
+// Login and admin answers are personal, so nothing may ever keep a copy of them
+app.use(['/api/auth', '/api/admin'], (req, res, next) => {
     res.set('Cache-Control', 'no-store')
     next()
 })
@@ -52,6 +53,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/artists', artistRoutes)
 app.use('/api/artworks', artworkRoutes)
 app.use('/api/auth', authRoutes)
+app.use('/api/admin', adminRoutes)
 
 // Any /api address we don't have gets a clean 404
 app.use('/api', (req, res) => {
