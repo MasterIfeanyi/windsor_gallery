@@ -24,5 +24,12 @@ export const useArtistsStore = defineStore('artists', () => {
     }
   }
 
-  return { artists, isLoading, error, loadArtists }
+  // Adds a new artist to the end of the list, without asking the server again
+  const addArtist = (artist) => {
+    if (!artists.value.some((item) => item._id === artist._id)) {
+      artists.value.push(artist)
+    }
+  }
+
+  return { artists, isLoading, error, loadArtists, addArtist }
 })

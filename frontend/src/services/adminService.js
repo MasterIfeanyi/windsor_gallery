@@ -54,3 +54,8 @@ export const updateArtwork = async (id, changes) => {
 export const deleteArtwork = async (id) => {
   await api.delete(`/admin/artworks/${encodeURIComponent(id)}`)
 }
+
+export const createArtist = async (name) => {
+  const { data } = await api.post('/admin/artists', { name })
+  return data.artist
+}

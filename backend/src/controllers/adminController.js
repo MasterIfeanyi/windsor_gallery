@@ -3,6 +3,7 @@ import mongoose from 'mongoose'
 import cloudinary from '../config/cloudinary.js'
 import Artist from '../models/Artist.js'
 import Artwork from '../models/Artwork.js'
+import { slugify } from '../utils/slugify.js'
 import { asyncHandler } from '../utils/asyncHandler.js'
 import { validateArtworkEdit, validateArtworkInput } from '../validators/artworkInput.js'
 import { ALLOWED_FORMATS, INCOMING_TRANSFORMATION, UPLOAD_ROOT } from '../constants/upload.js'
@@ -174,4 +175,39 @@ export const deleteArtwork = asyncHandler(async (req, res) => {
     }
 
     res.json({ message: 'Artwork deleted' })
+})
+
+const MAX_ARTIST_NAME_LENGTH = 60
+
+// POST /api/admin/artists
+export const createArtist = asyncHandler(async (req, res) => {
+    // Trim, and squash repeated spaces: "Van   Gogh " becomes "Van Gogh"
+    const name = typeof req.body.name === 'string' ? req.body.name.trim().replace(/\s+/g, ' ') : ''
+
+    if (!name || name.length > MAX_ARTIST_NAME_LENGTH) {
+        return res
+            .status(400)
+            .json({ message: `The name must be between 1 and ${MAX_ARTIST_NAME_LENGTH} characters` })
+    }
+
+    // A name like "!!!" would make an empty slug and a broken web address
+    if (!slugify(name)) {
+        return res.status(400).json({ message: 'The name must include letters or numbers' })
+    }
+
+    // The new artist goes to the end of the navigation
+    const last = await Artist.findOne().sort({ sortOrder: -1 }).select('sortOrder').lean()
+    const sortOrder = (last?.sortOrder ?? -1) + 1
+
+    try {
+        const artist = await Artist.create({ name, sortOrder })
+        res.status(201).json({ artist: { _id: artist._id, name: artist.name, slug: artist.slug } })
+    } catch (err) {
+        // 11000 means the unique name or slug already exists, so "basquiat" and
+        // "Basquiat" count as the same artist
+        if (err.code === 11000) {
+            return res.status(409).json({ message: 'An artist with this name already exists' })
+        }
+        throw err
+    }
 })

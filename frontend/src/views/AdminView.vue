@@ -9,8 +9,7 @@ import ImageDropzone from '../components/admin/ImageDropzone.vue'
 import BaseInput from '../components/base/BaseInput.vue'
 import BaseSelect from '../components/base/BaseSelect.vue'
 import BaseButton from '../components/base/BaseButton.vue'
-
-const MIN_YEAR = 1000
+import { getYearError } from '../utils/validation.js'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -40,14 +39,9 @@ watch(releaseYear, () => (errors.releaseYear = ''))
 watch(artistId, () => (errors.artistId = ''))
 
 const validate = () => {
-  const currentYear = new Date().getFullYear()
-  const year = releaseYear.value.trim()
-  const isYearOk =
-    year === '' || (/^\d{4}$/.test(year) && Number(year) >= MIN_YEAR && Number(year) <= currentYear)
-
   errors.file = file.value ? '' : 'Please choose an image.'
   errors.artistId = artistId.value ? '' : 'Please choose an artist.'
-  errors.releaseYear = isYearOk ? '' : `Enter a year between ${MIN_YEAR} and ${currentYear}.`
+  errors.releaseYear = getYearError(releaseYear.value)
 
   return Object.values(errors).every((message) => !message)
 }
@@ -82,6 +76,12 @@ const submit = async () => {
   }
 }
 
+// The edit page needs an artist. Use the one chosen in the form, or the first one.
+const manageSlug = computed(() => {
+  const chosen = artists.value.find((artist) => artist._id === artistId.value)
+  return (chosen ?? artists.value[0])?.slug
+})
+
 /* ---------- Log out ---------- */
 const logout = async () => {
   await authStore.logout()
@@ -96,7 +96,16 @@ const logout = async () => {
         <img src="../assets/logo.png" alt="Site logo" class="admin__logo" />
       </RouterLink>
 
-      <button type="button" class="admin__logout" @click="logout">Log out</button>
+      <div class="admin__links">
+        <RouterLink
+          v-if="manageSlug"
+          :to="{ name: 'admin-artworks', params: { slug: manageSlug } }"
+          class="text-link"
+        >
+          Manage artworks
+        </RouterLink>
+        <button type="button" class="text-link" @click="logout">Log out</button>
+      </div>
     </div>
 
     <form class="admin__form" novalidate @submit.prevent="submit">
@@ -164,17 +173,10 @@ const logout = async () => {
   width: auto;
 }
 
-.admin__logout {
-  padding: var(--space-2);
-  background: none;
-  border: none;
-  font-size: var(--text-sm);
-  color: var(--color-text-soft);
-  transition: color var(--transition);
-}
-
-.admin__logout:hover {
-  color: var(--color-text);
+.admin__links {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 /* Two columns on wide screens: the image box is a bit wider than the fields */

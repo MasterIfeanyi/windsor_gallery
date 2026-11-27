@@ -46,3 +46,17 @@ ul {
 *::-webkit-scrollbar {
   display: none; /* Chrome, Safari, new Edge */
 }
+
+/* Small quiet links and buttons, used on the admin pages */
+.text-link {
+  padding: var(--space-2);
+  background: none;
+  border: none;
+  font-size: var(--text-sm);
+  color: var(--color-text-soft);
+  transition: color var(--transition);
+}
+
+.text-link:hover {
+  color: var(--color-text);
+}

@@ -28,9 +28,22 @@ const router = createRouter({
       meta: { hideHeader: true, requiresAuth: true },
     },
     {
+      path: '/admin/artworks/:slug',
+      name: 'admin-artworks',
+      component: () => import('../views/AdminArtworksView.vue'),
+      // No hideHeader, so the artist names show. adminNav makes them stay on this page.
+      meta: { requiresAuth: true, adminNav: true },
+    },
+    {
       path: '/artist/:slug/:id',
       name: 'artwork',
       component: () => import('../views/ArtworkDetailView.vue'),
+    },
+    {
+      path: '/admin/artists/new',
+      name: 'admin-artist-new',
+      component: () => import('../views/AdminArtistView.vue'),
+      meta: { hideHeader: true, requiresAuth: true },
     },
   ],
 })

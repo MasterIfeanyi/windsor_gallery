@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { getArtworksByArtist } from '../controllers/artworkController.js'
 import {
+    createArtist,
     createArtwork,
     deleteArtwork,
     getUploadSignature,
@@ -10,13 +11,11 @@ import { requireAdmin } from '../middleware/requireAdmin.js'
 
 const router = Router()
 
-// One guard at the top protects every route in this file,
-// including any we add later
+// One guard at the top protects every route in this file
 router.use(requireAdmin)
 
-// The admin's own copy of the artwork list. The same code as the public one,
-// but behind the guard and never cached, so edits show up straight away.
 router.get('/artists/:slug/artworks', getArtworksByArtist)
+router.post('/artists', createArtist)
 
 router.post('/uploads/signature', getUploadSignature)
 router.post('/artworks', createArtwork)

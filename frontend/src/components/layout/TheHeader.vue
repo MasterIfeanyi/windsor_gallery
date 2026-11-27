@@ -17,6 +17,9 @@ const route = useRoute()
 // True when the page we are on belongs to this artist (gallery or detail page)
 const isActiveArtist = (slug) => route.params.slug === slug
 
+// On the admin edit page, the artist names switch artists on that same page
+const artistRouteName = computed(() => (route.meta.adminNav ? 'admin-artworks' : 'artist'))
+
 // The artists now come from the server through our store
 const artistsStore = useArtistsStore()
 const { artists } = storeToRefs(artistsStore)
@@ -103,7 +106,7 @@ onBeforeUnmount(() => {
           <ul class="nav__track" :style="{ '--start-index': startIndex }">
             <li v-for="(artist, index) in artists" :key="artist.slug" class="nav__slot">
               <RouterLink
-                :to="{ name: 'artist', params: { slug: artist.slug } }"
+                :to="{ name: artistRouteName, params: { slug: artist.slug } }"
                 class="nav__item"
                 :class="{ 'nav__item--active': isActiveArtist(artist.slug) }"
                 :tabindex="isInView(index) ? 0 : -1"
@@ -168,7 +171,7 @@ onBeforeUnmount(() => {
             <ul class="drawer__list">
               <li v-for="artist in artists" :key="artist.slug">
                 <RouterLink
-                  :to="{ name: 'artist', params: { slug: artist.slug } }"
+                  :to="{ name: artistRouteName, params: { slug: artist.slug } }"
                   class="drawer__link"
                   active-class="drawer__link--active"
                   :class="{ 'drawer__link--active': isActiveArtist(artist.slug) }"
