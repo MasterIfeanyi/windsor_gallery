@@ -1,12 +1,15 @@
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
+import { faXmark } from '@fortawesome/free-solid-svg-icons'
 import { useArtistsStore } from '../stores/artists.js'
-import { createArtist } from '../services/adminService.js'
+import { createArtist, deleteArtist } from '../services/adminService.js'
 import { getErrorMessage } from '../utils/errors.js'
 import AdminTopBar from '../components/admin/AdminTopBar.vue'
 import BaseInput from '../components/base/BaseInput.vue'
 import BaseButton from '../components/base/BaseButton.vue'
+import BaseIconButton from '../components/base/BaseIconButton.vue'
+import ConfirmModal from '../components/base/ConfirmModal.vue'
 
 // Keep this in step with the limit on the server
 const MAX_NAME_LENGTH = 60
@@ -16,6 +19,7 @@ const { artists } = storeToRefs(artistsStore)
 
 onMounted(() => artistsStore.loadArtists())
 
+/* ---------- Add an artist ---------- */
 const name = ref('')
 const nameError = ref('')
 const errorMessage = ref('')
@@ -57,6 +61,50 @@ const submit = async () => {
     isSubmitting.value = false
   }
 }
+
+/* ---------- Remove an artist, with a confirmation pop-up ---------- */
+const artistToRemove = ref(null)
+const isRemoving = ref(false)
+const removeError = ref('')
+
+const removeMessage = computed(() => {
+  const artistName = artistToRemove.value?.name ?? 'This artist'
+  return `${artistName} will be removed from the navigation. This cannot be undone. An artist who still has artworks cannot be removed.`
+})
+
+const askRemove = (artist) => {
+  removeError.value = ''
+  successMessage.value = ''
+  artistToRemove.value = artist
+}
+
+const cancelRemove = () => {
+  if (!isRemoving.value) artistToRemove.value = null
+}
+
+const confirmRemove = async () => {
+  if (!artistToRemove.value || isRemoving.value) return
+
+  const { _id: id } = artistToRemove.value
+  isRemoving.value = true
+  removeError.value = ''
+
+  try {
+    await deleteArtist(id)
+    artistsStore.removeArtist(id)
+    artistToRemove.value = null
+  } catch (err) {
+    if (err.response?.status === 404) {
+      // Already gone, so there is nothing left to remove
+      artistsStore.removeArtist(id)
+      artistToRemove.value = null
+    } else {
+      removeError.value = getErrorMessage(err)
+    }
+  } finally {
+    isRemoving.value = false
+  }
+}
 </script>
 
 <template>
@@ -85,9 +133,28 @@ const submit = async () => {
     <section v-if="artists.length" class="artist-admin__list">
       <h2 class="artist-admin__subtitle">Artists so far</h2>
       <ul>
-        <li v-for="artist in artists" :key="artist._id">{{ artist.name }}</li>
+        <li v-for="artist in artists" :key="artist._id" class="artist-admin__item">
+          <span>{{ artist.name }}</span>
+          <BaseIconButton
+            :icon="faXmark"
+            :label="`Remove ${artist.name}`"
+            @click="askRemove(artist)"
+          />
+        </li>
       </ul>
     </section>
+
+    <ConfirmModal
+      :open="artistToRemove !== null"
+      title="Remove this artist?"
+      :message="removeMessage"
+      confirm-label="Remove"
+      danger
+      :loading="isRemoving"
+      :error="removeError"
+      @confirm="confirmRemove"
+      @cancel="cancelRemove"
+    />
   </main>
 </template>
 
@@ -123,8 +190,11 @@ const submit = async () => {
   font-weight: 600;
 }
 
-.artist-admin__list li {
-  padding: var(--space-1) 0;
+/* The X sits right next to the name */
+.artist-admin__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
   font-size: var(--text-sm);
   color: var(--color-text-soft);
 }

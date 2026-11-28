@@ -31,5 +31,10 @@ export const useArtistsStore = defineStore('artists', () => {
     }
   }
 
-  return { artists, isLoading, error, loadArtists, addArtist }
+  // Takes an artist out of the list, after they were removed
+  const removeArtist = (id) => {
+    artists.value = artists.value.filter((item) => item._id !== id)
+  }
+
+  return { artists, isLoading, error, loadArtists, addArtist, removeArtist }
 })

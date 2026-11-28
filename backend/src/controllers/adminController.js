@@ -211,3 +211,29 @@ export const createArtist = asyncHandler(async (req, res) => {
         throw err
     }
 })
+
+// DELETE /api/admin/artists/:id
+export const deleteArtist = asyncHandler(async (req, res) => {
+    const { id } = req.params
+
+    if (!mongoose.isValidObjectId(id)) {
+        return res.status(404).json({ message: 'Artist not found' })
+    }
+
+    // An artist with artworks cannot be removed, or those artworks would be
+    // left pointing at nobody, with their images still sitting on Cloudinary
+    const artworkCount = await Artwork.countDocuments({ artist: id })
+    if (artworkCount > 0) {
+        const noun = artworkCount === 1 ? 'artwork' : 'artworks'
+        return res.status(409).json({
+            message: `This artist still has ${artworkCount} ${noun}. Delete them first, then remove the artist.`,
+        })
+    }
+
+    const artist = await Artist.findByIdAndDelete(id).select('_id').lean()
+    if (!artist) {
+        return res.status(404).json({ message: 'Artist not found' })
+    }
+
+    res.json({ message: 'Artist deleted' })
+})

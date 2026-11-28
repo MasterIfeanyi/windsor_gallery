@@ -3,6 +3,7 @@ import { getArtworksByArtist } from '../controllers/artworkController.js'
 import {
     createArtist,
     createArtwork,
+    deleteArtist,
     deleteArtwork,
     getUploadSignature,
     updateArtwork,
@@ -16,6 +17,7 @@ router.use(requireAdmin)
 
 router.get('/artists/:slug/artworks', getArtworksByArtist)
 router.post('/artists', createArtist)
+router.delete('/artists/:id', deleteArtist)
 
 router.post('/uploads/signature', getUploadSignature)
 router.post('/artworks', createArtwork)

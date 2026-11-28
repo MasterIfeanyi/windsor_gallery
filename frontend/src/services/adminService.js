@@ -59,3 +59,7 @@ export const createArtist = async (name) => {
   const { data } = await api.post('/admin/artists', { name })
   return data.artist
 }
+
+export const deleteArtist = async (id) => {
+  await api.delete(`/admin/artists/${encodeURIComponent(id)}`)
+}
