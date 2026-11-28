@@ -1,35 +1,12 @@
 [build]
-  # Install both projects, then build the frontend
-  command = "npm --prefix backend ci && npm --prefix frontend ci --include=dev && npm --prefix frontend run build"
+  # Install both projects, build the server file, then build the frontend
+  command = "npm --prefix backend ci --include=dev && npm --prefix frontend ci --include=dev && npm --prefix backend run build:function && npm --prefix frontend run build"
   publish = "frontend/dist"
-  functions = "backend/netlify/functions"
+  functions = "backend/netlify/dist"
 
 [build.environment]
   NODE_VERSION = "22"
 
 [functions]
-  node_bundler = "esbuild"
-  # Leave these packages unbundled. They are loaded from node_modules as they
-  # are, which avoids bundling problems with Express and the MongoDB driver.
-  external_node_modules = [
-    "express",
-    "mongoose",
-    "cors",
-    "cookie-parser",
-    "bcryptjs",
-    "jsonwebtoken",
-    "cloudinary",
-    "serverless-http",
-  ]
-
-# Every /api address goes to our function. This rule must stay first.
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/server/api/:splat"
-  status = 200
-
-# Every other address shows the Vue app, so refreshing /artist/basquiat works
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+  # Netlify ships the single built file plus the packages it needs
+  node_bundler = "nft"

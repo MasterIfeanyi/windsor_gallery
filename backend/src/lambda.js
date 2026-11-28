@@ -1,5 +1,5 @@
 import serverless from 'serverless-http'
-import app from '../../src/app.js'
+import app from './app.js'
 
 // Netlify sends every /api request here. basePath removes the function's own
 // address, so Express sees plain /api/... paths, just like on your computer.
