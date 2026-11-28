@@ -1,6 +1,6 @@
 [build]
   # Install both projects, then build the frontend
-  command = "npm --prefix backend ci && npm --prefix frontend ci && npm --prefix frontend run build"
+  command = "npm --prefix backend ci && npm --prefix frontend ci --include=dev && npm --prefix frontend run build"
   publish = "frontend/dist"
   functions = "backend/netlify/functions"
 
