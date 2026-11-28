@@ -14,6 +14,14 @@ export const connectDB = async () => {
     if (!cached.promise) {
         cached.promise = mongoose.connect(process.env.MONGODB_URI, {
             bufferCommands: false,
+            // Each function instance serves one request at a time, so a small pool
+            // is plenty. Many instances times a big pool would overload Atlas.
+            maxPoolSize: 5,
+            // Fail fast with a clear error instead of hanging until Netlify cuts us off
+            serverSelectionTimeoutMS: 8000,
+            // On the live site we do not rebuild indexes on every cold start.
+            // They already exist, because your local server created them.
+            autoIndex: process.env.NODE_ENV !== 'production',
         })
     }
 
